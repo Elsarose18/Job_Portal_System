@@ -1,9 +1,11 @@
 import sqlite3
 
+# ---------- Database Connection ----------
 def get_connection():
     conn = sqlite3.connect("job_portal.db", check_same_thread=False)
     return conn
 
+# ---------- Create Tables ----------
 def create_tables():
     conn = get_connection()
     cursor = conn.cursor()
@@ -27,14 +29,14 @@ def create_tables():
         )
     """)
 
-    # Applications Table
+    # Applications Table (FIXED - Only ONE primary key)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS apply_job (
             app_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            emp_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            emp_id INTEGER,
             emp_name TEXT NOT NULL,
-            resume TEXT,
             job_id INTEGER,
+            resume TEXT,
             status TEXT DEFAULT 'Pending',
             FOREIGN KEY (job_id) REFERENCES job(job_id)
         )
