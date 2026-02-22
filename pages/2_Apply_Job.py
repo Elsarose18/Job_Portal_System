@@ -1,49 +1,54 @@
+# pages/2_Apply_Job.py
 import streamlit as st
 import pandas as pd
-from database import get_connection
+from database import get_connection  # Make sure database.py has get_connection() function
 
 st.set_page_config(page_title="Apply Job", layout="centered")
 st.title("📝 Apply for a Job")
 
-# ---------- Get Jobs from Database ----------
+# Connect to database
 conn = get_connection()
+
+# Fetch jobs
 try:
-    jobs = pd.read_sql_query("SELECT job_id, title FROM job", conn)
-finally:
-    conn.close()
+    jobs = pd.read_sql_query("SELECT job_id, title, salary FROM job", conn)
+except Exception as e:
+    st.error(f"Error fetching jobs: {e}")
+    jobs = pd.DataFrame()  # empty
+
+conn.close()
 
 if not jobs.empty:
-    # Create options like: "Software Engineer (ID: 1)"
-    job_options = jobs["title"] + " (ID: " + jobs["job_id"].astype(str) + ")"
+    job_options = jobs["title"] + " (Salary: ₹" + jobs["salary"].astype(str) + ")"
     selected_job = st.selectbox("Select Job", job_options)
-
-    selected_job_id = int(selected_job.split("ID: ")[1].replace(")", ""))
+    selected_job_id = int(selected_job.split("(")[0].strip())  # get job_id from string
 
     st.markdown(f"**Applying for:** {selected_job}")
 
-    # ---------- Applicant Details ----------
-    name = st.text_input("Your Name")
-    qualifications = st.text_input("Qualifications")
-    experience = st.text_input("Experience (years)")
-    education = st.text_input("Education")
+    # Applicant info
+    name = st.text_input("Full Name")
+    qualification = st.text_input("Qualification")
+    experience = st.text_input("Experience")
+    skills = st.text_input("Skills")
 
     if st.button("Apply"):
-        if name and qualifications and experience and education:
-            conn = get_connection()
-            cursor = conn.cursor()
+        if name and qualification and experience and skills:
             try:
-                # Insert application into apply_job table
+                conn = get_connection()
+                cursor = conn.cursor()
+
                 cursor.execute("""
-                    INSERT INTO apply_job (emp_name, qualifications, experience, education, job_id, status)
+                    INSERT INTO apply_job (emp_name, qualification, experience, skills, job_id, status)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (name, qualifications, experience, education, selected_job_id, "Pending"))
+                """, (name, qualification, experience, skills, selected_job_id, "Pending"))
+
                 conn.commit()
+                conn.close()
                 st.success("✅ Application Submitted Successfully!")
             except Exception as e:
                 st.error(f"Error submitting application: {e}")
-            finally:
-                conn.close()
         else:
-            st.warning("Please fill in all fields.")
+            st.warning("Please fill all fields before submitting.")
+
 else:
-    st.info("No jobs available to apply for.")
+    st.info("No jobs available at the moment. Please check back later.")
