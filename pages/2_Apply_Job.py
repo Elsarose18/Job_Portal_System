@@ -3,7 +3,6 @@ import pandas as pd
 from database import get_connection
 
 st.set_page_config(page_title="Apply Job", layout="centered")
-
 st.title("📝 Apply for a Job")
 
 # Get jobs from database
@@ -12,53 +11,32 @@ jobs = pd.read_sql_query("SELECT job_id, title, company FROM job", conn)
 conn.close()
 
 if not jobs.empty:
-
-    # Create readable job options
-    job_options = jobs.apply(
-        lambda row: f"{row['title']} at {row['company']} (ID: {row['job_id']})",
-        axis=1
-    )
-
+    job_options = jobs["title"] + " (" + jobs["company"] + ")"
     selected_job = st.selectbox("Select Job", job_options)
 
-    # Extract job_id
-    selected_job_id = int(selected_job.split("ID: ")[1].replace(")", ""))
+    selected_job_id = jobs.loc[jobs["title"] + " (" + jobs["company"] + ")" == selected_job, "job_id"].values[0]
 
-    st.markdown(f"### 📌 Applying for: {selected_job}")
+    st.markdown(f"**Applying for:** {selected_job}")
 
-    st.divider()
+    # Employee input fields
+    name = st.text_input("Your Name")
+    qualifications = st.text_area("Qualifications (e.g., B.Tech, MBA, etc.)")
+    experience = st.text_area("Experience (e.g., 2 years at XYZ)")
 
-    name = st.text_input("👤 Your Name")
-
-    resume = st.file_uploader(
-        "📄 Upload Resume (PDF only)",
-        type=["pdf"]
-    )
-
-    if st.button("🚀 Submit Application"):
-
-        if name and resume:
-
+    if st.button("Apply"):
+        if name and qualifications and experience:
             conn = get_connection()
             cursor = conn.cursor()
-
             cursor.execute("""
-                INSERT INTO apply_job (emp_name, job_id, resume, status)
-                VALUES (?, ?, ?, ?)
-            """, (
-                name,
-                selected_job_id,
-                resume.read(),   # Store file as BLOB
-                "Pending"
-            ))
+                INSERT INTO apply_job (emp_name, qualifications, experience, job_id, status)
+                VALUES (?, ?, ?, ?, ?)
+            """, (name, qualifications, experience, selected_job_id, "Pending"))
 
             conn.commit()
             conn.close()
 
-            st.success("✅ Application Submitted Successfully!")
-
+            st.success("✅ Application submitted successfully!")
         else:
-            st.warning("⚠ Please fill all fields and upload your resume.")
-
+            st.warning("Please fill in all fields.")
 else:
-    st.info("🚫 No jobs available at the moment.")
+    st.info("No jobs available.")
