@@ -1,64 +1,56 @@
-# database.py
 import sqlite3
 
-# Name of your SQLite database file
-DB_FILE = "job_portal.db"
-
 def get_connection():
-    """Connect to the SQLite database and return the connection object."""
-    conn = sqlite3.connect(DB_FILE)
-    return conn
+    return sqlite3.connect("job_portal.db")
 
-def create_tables():
-    """Create all necessary tables for the job portal app."""
+def reset_database():
     conn = get_connection()
     cursor = conn.cursor()
 
-    # -----------------------------
-    # Employer table
-    # -----------------------------
+    # Drop existing tables
+    cursor.execute("DROP TABLE IF EXISTS applications")
+    cursor.execute("DROP TABLE IF EXISTS job")
+    cursor.execute("DROP TABLE IF EXISTS employer")
+    cursor.execute("DROP TABLE IF EXISTS users")
+
+    # Create tables
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS employer (
-            employer_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            company_name TEXT NOT NULL
-        )
+    CREATE TABLE employer (
+        employer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_name TEXT NOT NULL
+    )
     """)
 
-    # -----------------------------
-    # Job table
-    # -----------------------------
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS job (
-            job_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            company TEXT NOT NULL,
-            salary INTEGER
-        )
+    CREATE TABLE job (
+        job_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        salary REAL,
+        employer_id INTEGER,
+        FOREIGN KEY (employer_id) REFERENCES employer(employer_id)
+    )
     """)
 
-    # -----------------------------
-    # Apply Job table
-    # -----------------------------
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS apply_job (
-            app_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            emp_name TEXT NOT NULL,
-            qualification TEXT,
-            experience TEXT,
-            skills TEXT,
-            job_id INTEGER,
-            status TEXT DEFAULT 'Pending',
-            FOREIGN KEY(job_id) REFERENCES job(job_id)
-        )
+    CREATE TABLE users (
+        user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
+    )
     """)
 
-    # Commit changes and close connection
+    cursor.execute("""
+    CREATE TABLE applications (
+        application_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        job_id INTEGER,
+        application_date TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(user_id),
+        FOREIGN KEY (job_id) REFERENCES job(job_id)
+    )
+    """)
+
     conn.commit()
     conn.close()
-
-# -----------------------------
-# Optional: initialize the DB when running this file
-# -----------------------------
-if __name__ == "__main__":
-    create_tables()
-    print("✅ All tables created successfully in job_portal.db")
+    print("✅ Database reset and tables created successfully!")

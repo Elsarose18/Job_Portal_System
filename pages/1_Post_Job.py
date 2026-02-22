@@ -1,20 +1,28 @@
 import streamlit as st
 from database import get_connection
 
-st.title("🏢 Post Job")
+st.title("📝 Post a Job")
 
-company_name = st.text_input("Company Name")
+# Input fields
 title = st.text_input("Job Title")
-salary = st.number_input("Salary", min_value=0.0)
+salary = st.number_input("Salary", min_value=0.0, step=1000.0)
+company = st.text_input("Company Name")
 
 if st.button("Post Job"):
-    if company_name and title:
+    if title and company:
         conn = get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("INSERT INTO employer (company_name) VALUES (?)", (company_name,))
-        employer_id = cursor.lastrowid
+        # Add company if not exists
+        cursor.execute("SELECT employer_id FROM employer WHERE company_name = ?", (company,))
+        result = cursor.fetchone()
+        if result:
+            employer_id = result[0]
+        else:
+            cursor.execute("INSERT INTO employer (company_name) VALUES (?)", (company,))
+            employer_id = cursor.lastrowid
 
+        # Insert job
         cursor.execute(
             "INSERT INTO job (title, salary, employer_id) VALUES (?, ?, ?)",
             (title, salary, employer_id)
@@ -22,6 +30,6 @@ if st.button("Post Job"):
 
         conn.commit()
         conn.close()
-        st.success("Job Posted Successfully ✅")
+        st.success(f"Job '{title}' posted successfully!")
     else:
-        st.warning("All fields required")
+        st.error("Please fill in all fields!")
