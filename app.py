@@ -1,54 +1,23 @@
 import streamlit as st
 
-# Page configuration
-st.set_page_config(page_title="Job Portal", page_icon="📝")
+st.set_page_config(page_title="Job Portal", layout="wide")
 
-# Sidebar menu
-st.sidebar.title("Job Portal")
-menu = [
-    "Home",
-    "Post Job",
-    "Apply Job",
-    "View Jobs",
-    "View Applications",
-    "Validate Applications"
-]
-choice = st.sidebar.selectbox("Menu", menu)
+st.title("📝 Job Portal System")
 
-# Home Page
+options = ["Home", "Post Job", "Apply Job", "View Jobs", "View Applications", "Validate Applications", "Reset Database"]
+choice = st.sidebar.selectbox("Select an Option", options)
+
 if choice == "Home":
-    st.title("🏠 Welcome to Job Portal")
-    st.write("Use the sidebar to navigate to Post Job, Apply Job, or view applications.")
-
-# Post Job Page
+    st.write("Welcome to Job Portal! Use the sidebar to navigate.")
 elif choice == "Post Job":
-    st.experimental_set_query_params(page="post_job")
-    st.write("Go to: Pages → 1_Post_Job")
-
-# Apply Job Page
+    import pages.1_Post_Job
 elif choice == "Apply Job":
-    st.experimental_set_query_params(page="apply_job")
-    st.write("Go to: Pages → 2_Apply_Job")
-
-# View Jobs Page
+    import pages.2_Apply_Job
 elif choice == "View Jobs":
-    st.experimental_set_query_params(page="view_jobs")
-    st.write("Go to: Pages → 3_View_Jobs")
-
-# View Applications Page
+    import pages.3_View_Jobs
 elif choice == "View Applications":
-    st.experimental_set_query_params(page="view_applications")
-    st.write("Go to: Pages → 4_View_Applications")
-
-# Validate Applications Page
+    import pages.4_View_Applications
 elif choice == "Validate Applications":
-    st.experimental_set_query_params(page="validate_applications")
-    st.write("Go to: Pages → 5_Validate_Applications")
-
-# Admin Option: Reset Database
-st.markdown("---")
-st.subheader("⚠️ Admin Options")
-if st.button("Reset Database"):
-    from database import reset_database
-    reset_database()
-    st.success("✅ Database has been reset and tables recreated!")
+    import pages.5_Validate_Applications
+elif choice == "Reset Database":
+    import pages.0_Reset_Database
